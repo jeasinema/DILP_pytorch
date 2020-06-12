@@ -119,8 +119,8 @@ class Agent(object):
         return tf.reduce_max(Z, axis=1)
 
     def loss(self, batch_size=-1):
-        labels = np.array(self.training_data.values(), dtype=np.float32)
-        outputs = tf.gather(self.deduction(), np.array(self.training_data.keys(), dtype=np.int32))
+        labels = np.array(list(self.training_data.values()), dtype=np.float32)
+        outputs = tf.gather(self.deduction(), np.array(list(self.training_data.keys()), dtype=np.int32))
         if batch_size>0:
             index = np.random.randint(0, len(labels), batch_size)
             labels = labels[index]
@@ -175,6 +175,7 @@ class Agent(object):
                 for atom, value in valuation_dict:
                     print(str(atom)+": "+str(value))
                 if name:
+                    os.makedirs(checkpoint_dir, exist_ok=True)
                     checkpoint.save(checkpoint_prefix)
                     pd.Series(np.array(losses)).to_csv(name+".csv")
             print("-"*20+"\n")

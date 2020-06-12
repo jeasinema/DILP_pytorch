@@ -1,7 +1,6 @@
 from __future__ import print_function, division, absolute_import
 from core.clause import *
 from core.ilp import *
-import ray
 from core.rules import *
 from core.induction import *
 from core.clause import str2atom,str2clause
@@ -63,7 +62,6 @@ def setup_even():
     man = RulesManager(language, program_temp)
     return man, ilp
 
-@ray.remote
 def start_DILP(task, name):
     import tensorflow as tf
     tf.enable_eager_execution()
@@ -74,7 +72,6 @@ def start_DILP(task, name):
     agent = Agent(man, ilp)
     return agent.train(name=name)[-1]
 
-@ray.remote
 def start_NTP(task, name=None):
     import tensorflow as tf
     from core.NTP import ProofState
@@ -101,6 +98,5 @@ def start_NTP(task, name=None):
     return final_loss
 
 if __name__ == "__main__":
-    ray.init()
-    print(ray.get([start_NTP.remote("predecessor", "e"+str(i)) for i in range(12)]))
-    #start_NTP("predecessor", "predecessor"+"21")
+    # start_DILP("predecessor", "predecessor0")
+    start_DILP("even", "even0")

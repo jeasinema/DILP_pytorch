@@ -4,7 +4,7 @@ from itertools import product
 from core.ilp import *
 from core.clause import *
 from collections import defaultdict
-from itertools import izip_longest
+from itertools import zip_longest
 
 class RulesManager():
     def __init__(self, language_frame, program_template):
@@ -156,7 +156,7 @@ def find_shape(seq):
     except TypeError:
         return ()
     shapes = [find_shape(subseq) for subseq in seq]
-    return (len_,) + tuple(max(sizes) for sizes in izip_longest(*shapes,
+    return (len_,) + tuple(max(sizes) for sizes in zip_longest(*shapes,
                                                                 fillvalue=1))
 
 def fill_array(arr, seq):
@@ -168,5 +168,5 @@ def fill_array(arr, seq):
         arr[:len_] = seq
         arr[len_:] = 0
     else:
-        for subarr, subseq in izip_longest(arr, seq, fillvalue=()):
+        for subarr, subseq in zip_longest(arr, seq, fillvalue=()):
             fill_array(subarr, subseq)
