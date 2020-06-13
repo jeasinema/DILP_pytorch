@@ -4,7 +4,7 @@ from core.ilp import *
 from core.rules import *
 from core.induction import *
 from core.clause import str2atom,str2clause
-from core.NTP import NeuralProver
+# from core.NTP import NeuralProver
 
 def setup_predecessor():
     constants = [str(i) for i in range(10)]
@@ -63,11 +63,11 @@ def setup_even():
     return man, ilp
 
 def start_DILP(task, name):
-    import tensorflow as tf
-    tf.enable_eager_execution()
+    # import tensorflow as tf
+    # tf.enable_eager_execution()
     if task == "predecessor":
         man, ilp = setup_predecessor()
-    if task == "even":
+    elif task == "even":
         man, ilp = setup_even()
     agent = Agent(man, ilp)
     return agent.train(name=name)[-1]
