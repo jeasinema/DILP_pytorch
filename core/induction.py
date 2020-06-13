@@ -33,13 +33,18 @@ class Agent(object):
             shape = self.rule_weights[predicate].shape
             rule_weights = tf.reshape(self.rule_weights[predicate] ,[-1])
             weights = tf.reshape(tf.nn.softmax(rule_weights)[:, None], shape)
-            indexes = np.nonzero(weights>0.05)
+
+            topk = tf.nn.top_k(tf.reshape(weights, [-1]), min(2,
+                tf.reshape(weights, [-1]).shape[0]))[1]
+            indexes = tf.unravel_index(topk, weights.shape).numpy()
+            # indexes = np.nonzero(weights>0.05)
             print(str(predicate))
             for i in range(len(indexes[0])):
                 print("weight is {}".format(weights[indexes[0][i], indexes[1][i]]))
                 print(str(clauses[0][indexes[0][i]]))
                 print(str(clauses[1][indexes[1][i]]))
                 print("\n")
+            print('=======')
 
     def __init_training_data(self, positive, negative):
         for i, atom in enumerate(self.ground_atoms):
