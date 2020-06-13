@@ -11,6 +11,7 @@ import os
 from core.rules import RulesManager
 from core.clause import Predicate
 from pprint import pprint
+from torch.utils.tensorboard import SummaryWriter
 
 
 class Agent(object):
@@ -42,6 +43,7 @@ class Agent(object):
         #                                                        dtype=tf.float32)
 
     def show_definition(self):
+        log_text = ''
         for predicate, clauses in self.rules_manager.all_clauses.items():
             shape = self.rule_weights[str(predicate)].shape
             rule_weights = torch.reshape(self.rule_weights[str(predicate)], [-1])
@@ -55,13 +57,13 @@ class Agent(object):
             indexes = (topk/weights.shape[1], topk%weights.shape[1])
             # indexes = np.nonzero(weights>0.05)
 
-            print(str(predicate))
+            log_text += '{}  \n'.format(str(predicate))
             for i in range(len(indexes[0])):
-                print("weight is {}".format(weights[indexes[0][i], indexes[1][i]]))
-                print(str(clauses[0][indexes[0][i]]))
-                print(str(clauses[1][indexes[1][i]]))
-                print("\n")
-            print('=======')
+                log_text += "weight is {}  \n".format(weights[indexes[0][i], indexes[1][i]])
+                log_text += '{}  \n'.format(str(clauses[0][indexes[0][i]]))
+                log_text += '{}  \n'.format(str(clauses[1][indexes[1][i]]))
+            log_text += '{}  \n'.format('=======')
+        return log_text
 
     def __init_training_data(self, positive, negative):
         for i, atom in enumerate(self.ground_atoms):
@@ -227,7 +229,7 @@ class Agent(object):
         :return: the loss history
         """
         if name:
-            checkpoint_dir = "./model/"+name
+            checkpoint_dir = "./model_pt/"+name
             checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
             try:
                 self.rule_weights = torch.load(checkpoint_prefix)
@@ -247,8 +249,9 @@ class Agent(object):
 
         losses = []
 
-        optimizer = torch.optim.RMSprop(self.rule_weights.values(), lr=0.5)
+        optimizer = torch.optim.RMSprop(self.rule_weights.values(), lr=0.1)
         # optimizer = tf.train.RMSPropOptimizer(learning_rate=0.5)
+        writer = SummaryWriter(checkpoint_dir)
 
         for i in range(steps):
             optimizer.zero_grad()
@@ -264,11 +267,13 @@ class Agent(object):
             losses.append(loss_avg)
             print("-"*20)
             print("step "+str(i)+" loss is "+str(loss_avg))
+            writer.add_scalar('loss', loss_avg, i)
             if i%5==0:
-                self.show_definition()
+                log_text = self.show_definition()
+                writer.add_text('program', log_text, i)
                 valuation_dict = self.valuation2atoms(self.deduction()).items()
-                for atom, value in valuation_dict:
-                    print(str(atom)+": "+str(value))
+                # for atom, value in valuation_dict:
+                #     print(str(atom)+": "+str(value))
                 if name:
                     os.makedirs(checkpoint_dir, exist_ok=True)
 
