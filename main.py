@@ -20,6 +20,36 @@ def setup_predecessor():
     man = RulesManager(language, program_temp)
     return man, ilp
 
+def setup_planning():
+    constants = ['blocka', 'blockb', 'blockc', 'sita', 'sitb']
+    ontable = Predicate('ontable', 2)
+    clear = Predicate('clear', 2)
+    # on = Predicate('on', 3)
+    inprecond = Predicate('inprecond', 2)
+
+    background = [
+        Atom(ontable, ['blocka', 'sita']),
+        Atom(clear, ['blocka', 'sita']),
+        Atom(ontable, ['blockc', 'sitb']),
+        # Atom(on, ['blocka', 'blockc', 'sitb']),
+        # Atom(clear, ['blocka', 'sitb']),
+    ]
+    positive = [
+        Atom(inprecond, ['blocka', 'sita']),
+        # Atom(inprecond, ['blocka', 'sitb']),
+    ]
+    negative = [
+        Atom(inprecond, ['blockc', 'sitb']),
+    ]
+    # language = LanguageFrame(inprecond, [ontable, clear, on], constants)
+    language = LanguageFrame(inprecond, [ontable, clear], constants)
+    ilp = ILP(language, background, positive, negative)
+    program_temp = ProgramTemplate([], {
+        inprecond: [RuleTemplate(1, False), RuleTemplate(0, False),]
+        }, 4)
+    man = RulesManager(language, program_temp)
+    return man, ilp
+
 def setup_fizz():
     constants = [str(i) for i in range(10)]
     succ = Predicate("succ", 2)
@@ -69,6 +99,8 @@ def start_DILP(task, name):
         man, ilp = setup_predecessor()
     elif task == "even":
         man, ilp = setup_even()
+    elif task == 'planning':
+        man, ilp = setup_planning()
     agent = Agent(man, ilp)
     return agent.train(name=name)[-1]
 
@@ -99,4 +131,5 @@ def start_NTP(task, name=None):
 
 if __name__ == "__main__":
     # start_DILP("predecessor", "predecessor0")
-    start_DILP("even", "even0")
+    # start_DILP("even", "even0")
+    start_DILP("planning", "planning0")
