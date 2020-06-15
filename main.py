@@ -45,7 +45,9 @@ def setup_planning():
     language = LanguageFrame(inprecond, [ontable, clear], constants)
     ilp = ILP(language, background, positive, negative)
     program_temp = ProgramTemplate([], {
-        inprecond: [RuleTemplate(1, False), RuleTemplate(0, False),]
+        # inprecond: [RuleTemplate(1, False), RuleTemplate(0, False),]
+        inprecond: [RuleTemplate(2, False), RuleTemplate(1, False), RuleTemplate(0, False),]
+        # inprecond: [RuleTemplate(1, False),]
         }, 4)
     man = RulesManager(language, program_temp)
     return man, ilp
@@ -132,4 +134,4 @@ def start_NTP(task, name=None):
 if __name__ == "__main__":
     # start_DILP("predecessor", "predecessor0")
     # start_DILP("even", "even0")
-    start_DILP("planning", "planning0")
+    start_DILP("planning", "planning3")
