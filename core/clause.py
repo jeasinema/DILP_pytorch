@@ -59,8 +59,8 @@ class Atom(object):
     def __init__(self, predicate, terms):
         '''
         :param predicate: Predicate, the predicate of the atom
-        :param terms: tuple of string (or integer) of size 1 or 2.
-        use integer 0, 1, 2 as variables
+        :param terms: tuple of string (or integer) of size > 0.
+        use integer 0, 1, 2, ... as variables
         '''
         object.__init__(self)
         self.predicate = predicate

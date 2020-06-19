@@ -14,7 +14,7 @@ class RulesManager():
         self.__predicate_mapping = {} # map from predicate to ground atom indices
         self.all_grounds = []
         self.__generate_grounds()
-        self.all_clauses = defaultdict(list) # dictionary of predicate to list(2d) of lists of clause.
+        self.all_clauses = defaultdict(list) # dictionary of (invented + target) predicate to list(2d) of lists of clause.
         self.__init_all_clauses()
         self.deduction_matrices =defaultdict(list) # dictionary of predicate to list of lists of deduction matrices.
         self.__init_deduction_matrices()
@@ -22,14 +22,9 @@ class RulesManager():
     def __init_all_clauses(self):
         intensionals = self.__language.target + self.program_template.auxiliary
         for intensional in intensionals:
-            # TODO: 2 clauses
             for i in range(len(self.program_template.rule_temps[intensional])):
                 self.all_clauses[intensional].append(self.generate_clauses(intensional,
                     self.program_template.rule_temps[intensional][i]))
-            # self.all_clauses[intensional].append(self.generate_clauses(intensional,
-            #                                                            self.program_template.rule_temps[intensional][0]))
-            # self.all_clauses[intensional].append(self.generate_clauses(intensional,
-            #                                                            self.program_template.rule_temps[intensional][1]))
 
     def __init_deduction_matrices(self):
         for intensional, clauses in self.all_clauses.items():
@@ -53,13 +48,18 @@ class RulesManager():
             predicates = self.__language.extensional
         terms = []
         for predicate in predicates:
+            # WARN: 0/1/2 arity, large arity will implicitly suggest more free variables,
+            # thus also enlarge this for-loop
             body_variables = [body_variable for _ in range(predicate.arity)]
             terms += self.generate_body_atoms(predicate, *body_variables)
-        # TODO: 2 atoms
-        result_tuples = product(head, terms, terms)
-        return self.prune([Clause(result[0], result[1:]) for result in result_tuples])
+        # WARN: 2 atoms, result_tuples can be too many
+        result_tuples = list(product(head, *[terms for _ in range(rule_template.atoms_n)]))
+        # result_tuples = list(product(head, terms, terms)
+        print('======= Total clauses: {} ======='.format(len(result_tuples)))
+        pruned = self.prune([Clause(result[0], result[1:]) for result in result_tuples])
+        print('======= Total clauses(pruned): {} ======='.format(len(pruned)))
 
-    def find_index(self,atom):
+    def find_index(self, atom):
         '''
         find index for a ground atom
         :param atom:
@@ -78,39 +78,39 @@ class RulesManager():
         :param clause:
         :return: array of size (number_of_ground_atoms, max_satisfy_paris, 2)
         '''
-        #TODO: genrate matrix n
         satisfy = []
         for atom in self.all_grounds:
             if clause.head.predicate == atom.predicate:
                 satisfy.append(self.find_satisfy_by_head(clause, atom))
             else:
                 satisfy.append([])
-        # TODO: 0/1/2 arity
         X = np.empty(find_shape(satisfy), dtype=np.int32)
         fill_array(X, satisfy)
         return X
 
     def find_satisfy_by_head(self, clause, head):
         '''
-        find combination of ground atoms that can trigger the clause to get a specific conclusion (head atom)
+        find combination of ground atoms that can trigger the clause to get a specific conclusion (head atom), for free variable, an existential quantifier is applied.
         :param clause:
         :param head:
         :return: list of tuples of indexes
         '''
         result = [] #list of paris of indexes
         free_body = clause.replace_by_head(head).body
-        # TODO: 2 atoms
-        # TODO: 0/1/2 arity
-        free_variables = list(free_body[0].variables.union(free_body[1].variables))
+        free_variables = set()
+        for i in range(len(free_body)):
+            free_variables = free_variables.union(free_body[i].variables)
+        free_variables = list(free_variables)
+
         repeat_constatns = [self.__language.constants for _ in free_variables]
+        # WARN: 0/1/2 arity, large arity will implicitly suggest more free variables,
+        # thus also enlarge this for-loop
         all_constants_combination = product(*repeat_constatns)
         all_match = []
         for combination in all_constants_combination:
             all_match.append({free_variables[i]:constant for i,constant in enumerate(combination)})
         for match in all_match:
-            # TODO: 2 atoms
-            result.append((self.find_index(free_body[0].replace(match)),
-                           self.find_index(free_body[1].replace(match))))
+            result.append(tuple([self.find_index(i.replace(match)) for i in free_body]))
         return result
 
     def __generate_grounds(self):
@@ -131,8 +131,8 @@ class RulesManager():
         pruned = []
         def not_unsafe(clause):
             head_variables = set(clause.head.terms)
-            # TODO: 2 atoms
-            body_variables = set(clause.body[0].terms+clause.body[1].terms)
+            body_variables = sum(tuple([clause.body[i].terms for i in
+                range(len(clause.body))]), ())
             return head_variables.issubset(body_variables)
 
         def not_circular(clause):
@@ -193,6 +193,14 @@ class RulesManager():
             else:
                 return False
 
+        def no_repeat(clause):
+            '''
+            e.g. pred(X,Y) :- A(X,Y), A(X, Y)
+            Notice: sometimes a repeated clause will be the only valid one
+            when atoms_n of the template is too large
+            '''
+            return len(clause.atoms) == len(set([str(i) for i in clause.atoms]))
+
         for clause in clauses:
             if follow_order(clause) and \
                 not_unsafe(clause) and \
@@ -200,6 +208,7 @@ class RulesManager():
                 not_circular(clause) and \
                 not_duplicated(clause):
                 # not_recursive(clause):
+                # no_repeat(clause):
                 pruned.append(clause)
         return pruned
 

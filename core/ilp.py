@@ -32,7 +32,7 @@ class LanguageFrame():
         self.constants = constants
 
 class RuleTemplate():
-    def __init__(self, variables_n, allow_intensional):
+    def __init__(self, variables_n, allow_intensional, atoms_n=2):
         '''
         :param variables_n: integer, number of
         existentially quantified variables allowed in the clause
@@ -41,6 +41,7 @@ class RuleTemplate():
         '''
         self.variables_n = variables_n
         self.allow_intensional = allow_intensional
+        self.atoms_n = atoms_n
 
 class ProgramTemplate():
     def __init__(self, auxiliary, rule_temps, forward_n):

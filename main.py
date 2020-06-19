@@ -15,7 +15,7 @@ def setup_predecessor():
 
     language = LanguageFrame(Predicate("predecessor",2), [Predicate("succ",2)], constants)
     ilp = ILP(language, background, positive, negative)
-    program_temp = ProgramTemplate([], {Predicate("predecessor", 2): [RuleTemplate(1, False), RuleTemplate(0, False)]},
+    program_temp = ProgramTemplate([], {Predicate("predecessor", 2): [RuleTemplate(1, False, 3), RuleTemplate(0, False)]},
                                    4)
     man = RulesManager(language, program_temp)
     return man, ilp
@@ -24,30 +24,34 @@ def setup_planning():
     constants = ['blocka', 'blockb', 'blockc', 'sita', 'sitb']
     ontable = Predicate('ontable', 2)
     clear = Predicate('clear', 2)
-    # on = Predicate('on', 3)
+    on = Predicate('on', 3)
     inprecond = Predicate('inprecond', 2)
 
     background = [
         Atom(ontable, ['blocka', 'sita']),
-        Atom(clear, ['blocka', 'sita']),
+        Atom(on, ['blockb', 'blocka', 'sita']),
+        Atom(clear, ['blockb', 'sita']),
         Atom(ontable, ['blockc', 'sitb']),
-        # Atom(on, ['blocka', 'blockc', 'sitb']),
-        # Atom(clear, ['blocka', 'sitb']),
+        Atom(ontable, ['blockb', 'sitb']),
+        Atom(on, ['blocka', 'blockc', 'sitb']),
+        Atom(clear, ['blockb', 'sitb']),
+        Atom(clear, ['blocka', 'sitb']),
     ]
     positive = [
-        Atom(inprecond, ['blocka', 'sita']),
-        # Atom(inprecond, ['blocka', 'sitb']),
+        Atom(inprecond, ['blockb', 'sita']),
+        Atom(inprecond, ['blocka', 'sitb']),
     ]
     negative = [
+        Atom(inprecond, ['blockb', 'sitb']),
+        Atom(inprecond, ['blocka', 'sita']),
         Atom(inprecond, ['blockc', 'sitb']),
     ]
-    # language = LanguageFrame(inprecond, [ontable, clear, on], constants)
-    language = LanguageFrame(inprecond, [ontable, clear], constants)
+    language = LanguageFrame(inprecond, [ontable, clear, on], constants)
     ilp = ILP(language, background, positive, negative)
     program_temp = ProgramTemplate([], {
         # inprecond: [RuleTemplate(1, False), RuleTemplate(0, False),]
-        inprecond: [RuleTemplate(2, False), RuleTemplate(1, False), RuleTemplate(0, False),]
-        # inprecond: [RuleTemplate(1, False),]
+        # inprecond: [RuleTemplate(2, False), RuleTemplate(1, False), RuleTemplate(0, False),]
+        inprecond: [RuleTemplate(1, False, 3),]
         }, 4)
     man = RulesManager(language, program_temp)
     return man, ilp
@@ -134,4 +138,4 @@ def start_NTP(task, name=None):
 if __name__ == "__main__":
     # start_DILP("predecessor", "predecessor0")
     # start_DILP("even", "even0")
-    start_DILP("planning", "planning3")
+    start_DILP("planning", "planning10")

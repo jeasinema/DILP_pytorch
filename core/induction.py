@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from collections import OrderedDict, defaultdict
+from functools import reduce
 import pandas as pd
 import os
 from core.rules import RulesManager
@@ -27,7 +28,9 @@ class Agent(object):
 
     def __init__rule_weights(self):
         for predicate, clauses in self.rules_manager.all_clauses.items():
-            # TODO: 2 clauses
+            # WARN: 2 clauses, thus add independent clauses assumption here
+            # i.e. weights now assigned to each clause instead of the program
+            # (combination of clauses)
             self.rule_weights[str(predicate)] = nn.ParameterList()
             for i in range(len(clauses)):
                 self.rule_weights[str(predicate)].append(nn.Parameter(torch.randn(
@@ -52,7 +55,6 @@ class Agent(object):
             log_text += '{}  \n'.format(str(predicate))
             for i in range(len(result[predicate][0])):
                 # each topk program
-                # TODO: 2 clauses
                 log_text += "weight is {}  \n".format([w[i].item() for w in rule_weights])
                 for j in range(len(result[predicate])):
                     # each rule template
@@ -133,7 +135,6 @@ class Agent(object):
         :param rule_weights: list of tensor, shape (number_of_rule_temps, number_of_clauses_generated)
         :return:
         '''
-        # TODO: 2 clauses
         result_valuations = [[] for _ in rule_weights]
         for i in range(len(result_valuations)):
             for matrix in deduction_matrices[i]:
@@ -166,13 +167,8 @@ class Agent(object):
         # pred(X) :- A(X, Y), B(X).
         #   then size(X) = (num_of_ground_atoms, num_of_constants, 2)
 
-        # TODO: 2 atoms
-        # TODO: 2 arity
-        X1 = X[:, :, 0]
-        X2 = X[:, :, 1]
-        Y1 = valuation.T[X1]
-        Y2 = valuation.T[X2]
-        Z = Y1*Y2
+        Z = reduce(torch.mul, [valuation.T[X[:, :, i]] for i in
+            range(X.shape[-1])])
         return torch.max(Z, dim=1)[0].T
 
     def loss(self, batch_size=-1):
