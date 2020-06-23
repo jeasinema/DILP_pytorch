@@ -34,7 +34,6 @@ class RulesManager():
                     row_matrices.append(self.generate_induction_matrix(clause))
                 self.deduction_matrices[intensional].append(row_matrices)
 
-
     def generate_clauses(self, intensional, rule_template):
         base_variable = tuple(range(intensional.arity))
         head = (Atom(intensional,base_variable),)
@@ -58,6 +57,7 @@ class RulesManager():
         print('======= Total clauses: {} ======='.format(len(result_tuples)))
         pruned = self.prune([Clause(result[0], result[1:]) for result in result_tuples])
         print('======= Total clauses(pruned): {} ======='.format(len(pruned)))
+        return pruned
 
     def find_index(self, atom):
         '''
@@ -195,7 +195,7 @@ class RulesManager():
 
         def no_repeat(clause):
             '''
-            e.g. pred(X,Y) :- A(X,Y), A(X, Y)
+            e.g. pred(X,Y) :- A(X,Y), A(X,Y)
             Notice: sometimes a repeated clause will be the only valid one
             when atoms_n of the template is too large
             '''
