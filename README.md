@@ -18,3 +18,7 @@ Learnin/Inference may significantly slow down due to large arity/number of claus
 
 ## User Guide
 * run main.py
+
+# Ackonwledgement
+
+This repo is effectively a translation of https://github.com/ZhengyaoJiang/GradientInduction.
